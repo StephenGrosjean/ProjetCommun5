@@ -4,10 +4,9 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
 
-public class EndManager : MonoBehaviour
+public class MenuManager : MonoBehaviour
 {
-    [SerializeField] private TextMeshProUGUI highScore, currentScore;
-    [SerializeField] private GameObject highScoreToggle;
+    [SerializeField] private TextMeshProUGUI highScore;
 
 
 
@@ -15,12 +14,9 @@ public class EndManager : MonoBehaviour
     void Start()
     {
         highScore.text = "High Score : " + PlayerPrefs.GetInt("MaxScore").ToString();
-        currentScore.text = "Current Score : " + PlayerPrefs.GetInt("CurrentScore").ToString();
-
-        highScoreToggle.SetActive(PlayerPrefs.GetInt("asHighScore" ) > 0);
     }
 
-    public void Restart() {
+    public void Starting() {
         SceneManager.LoadScene("Main");
     }
 
@@ -28,9 +24,7 @@ public class EndManager : MonoBehaviour
         PlayerPrefs.SetInt("MaxScore", 0);
         PlayerPrefs.SetInt("asHighScore", 0);
         PlayerPrefs.SetInt("CurrentScore", 0);
-    }
+        highScore.text = "High Score : " + PlayerPrefs.GetInt("MaxScore").ToString();
 
-    public void ReturnMenu() {
-        SceneManager.LoadScene("Menu");
     }
 }
