@@ -1,81 +1,113 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private GameObject livingRoom, garden, hall, kitchen;
-    [SerializeField] private bool livingRoom_Active, garden_Active, hall_Active, kitchen_Active;
+    [SerializeField] private List<GameObject> objectsToHide, placesToHide, placesToHideBis;
+    [SerializeField] private TextMeshProUGUI timer, missedText, objectFoundsText, scoreText;
+    [SerializeField] private GameObject helpPanel, showHelp;
 
-    private string currentRoom;
-    public string CurrentRoom {
-        get { return currentRoom; }
-        set { currentRoom = value; }
+    private float time;
+    private float sec, min;
+    private int missed,found;
+
+    private int maxItems = 3;
+    private bool canCount = true;
+    private int baseScore = 10000;
+
+
+    private int score;
+
+    private void Start() {
+        GameObject[] placesToHideArray = GameObject.FindGameObjectsWithTag("Object");
+        foreach(GameObject obj in placesToHideArray) {
+            placesToHide.Add(obj);
+        }
+
+        foreach(GameObject obje in placesToHide) {
+            placesToHideBis.Add(obje);
+        }
+
+        Distribute();
     }
 
-    public void ChangeRoom(string room) {
-          switch (room) {
-            case "LivingRoom":
-                livingRoom_Active = true;
-                garden_Active = false;
-                hall_Active = false;
-                kitchen_Active = false;
-                break;
+    private void Update() {
+        score = Mathf.RoundToInt(baseScore - (time * 100) - (missed * 50)); 
 
-            case "Garden":
-                livingRoom_Active = false;
-                garden_Active = true;
-                hall_Active = false;
-                kitchen_Active = false;
-                break;
-
-            case "Hall":
-                livingRoom_Active = false;
-                garden_Active = false;
-                hall_Active = true;
-                kitchen_Active = false;
-                break;
-
-            case "Kitchen":
-                livingRoom_Active = false;
-                garden_Active = false;
-                hall_Active = false;
-                kitchen_Active = true;
-                break;
+        if (canCount) {
+            time = Time.time;
+            scoreText.text = score.ToString();
+            timer.text = FormatTime(Time.time);
         }
 
-        SwitchRooms();
-    }
-
-
-    void SwitchRooms() {
-        if (livingRoom_Active) {
-            livingRoom.SetActive(true);
-            garden.SetActive(false);
-            hall.SetActive(false);
-            kitchen.SetActive(false);
-        }
-
-        if (garden_Active) {
-            livingRoom.SetActive(false);
-            garden.SetActive(true);
-            hall.SetActive(false);
-            kitchen.SetActive(false);
-        }
-
-        if (hall_Active) {
-            livingRoom.SetActive(false);
-            garden.SetActive(false);
-            hall.SetActive(true);
-            kitchen.SetActive(false);
-        }
-
-        if (kitchen_Active) {
-            livingRoom.SetActive(false);
-            garden.SetActive(false);
-            hall.SetActive(false);
-            kitchen.SetActive(true);
+        if (Input.GetKeyDown(KeyCode.H)) {
+            helpPanel.SetActive(!helpPanel.active);
+            showHelp.SetActive(!helpPanel.active);
         }
     }
 
+    string FormatTime(float time) {
+        int intTime = (int)time;
+        int minutes = intTime / 60;
+        int seconds = intTime % 60;
+        float fraction = time * 1000;
+        fraction = (fraction % 1000);
+        string timeText = string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, fraction);
+        return timeText;
+    }
+
+    public void AddMissed() {
+        missed++;
+        missedText.text = "Missed : " + missed.ToString();
+    }
+
+    public void AddObjectFound() {
+        found++;
+        objectFoundsText.text = "Found : " + found.ToString() + " / 3";
+        if(found == maxItems) {
+            CalculateScore();
+        }
+    }
+
+    void Distribute() {
+        foreach(GameObject obj in objectsToHide) {
+            int RDMN = Random.Range(0, placesToHide.Count-1);
+            placesToHide[RDMN].GetComponent<Object>().SetObject(obj);
+            placesToHide[RDMN].tag = "Untagged";
+
+            placesToHide.Clear();
+            GameObject[] placesToHideArray = GameObject.FindGameObjectsWithTag("Object");
+            foreach (GameObject obje in placesToHideArray) {
+                placesToHide.Add(obje);
+            }
+
+        }
+
+        foreach (GameObject obj in placesToHideBis) {
+            obj.tag ="Object";
+        }
+    }
+
+    void CalculateScore() {
+        canCount = false;
+        Finish(score);
+    }
+
+    void Finish(int score) {
+        PlayerPrefs.SetInt("CurrentScore", score);
+        if(PlayerPrefs.GetInt("MaxScore") < PlayerPrefs.GetInt("CurrentScore")) {
+            PlayerPrefs.SetInt("MaxScore", score);
+            PlayerPrefs.SetInt("asHighScore", 1);
+        }
+        else {
+            PlayerPrefs.SetInt("asHighScore", 0);
+
+        }
+
+        SceneManager.LoadScene("EndGame");
+
+    }
 }
